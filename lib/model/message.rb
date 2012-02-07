@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 =begin
   This file is part of Viewpoint; the Ruby library for Microsoft Exchange Web Services.
 
@@ -59,6 +60,29 @@ module Viewpoint
           (resp.status == 'Success') || (raise EwsError, "Could not send message. #{resp.code}: #{resp.message}")
         else
           self.new({:item_id => msg_id})
+        end
+      end
+
+      # Create a new mailbox element from a passed hash.
+      def self.create_item_from_hash(item, folder_id = :drafts)
+        # Try to create the item.
+        conn = Viewpoint::EWS::EWS.instance
+        resp = conn.ews.create_message_item(folder_id, item, 'SaveOnly')
+        if (resp.status == 'Success')
+          resp = resp.items.shift
+          self.new(resp[resp.keys.first])
+        else
+          raise EwsError, "Could not create Message. #{resp.code}: #{resp.message}"
+        end
+      end
+
+      # Send out the created message.
+      def send
+        # Try to send it.
+        conn = Viewpoint::EWS::EWS.instance
+        resp = conn.ews.send_item([{ :id => @item_id, :change_key => @change_key }])
+        if (resp.status != 'Success')
+          raise EwsError, "Could not send Message. #{resp.code}: #{resp.message}"
         end
       end
 
